@@ -7,7 +7,7 @@
 //upload point files of focus reefs as asset into Earth engine. Here called 'reef_points
 
 var buffer500 = function(feature) {
-  return feature.buffer(500);   // substitute in your value of here of biuffer size.
+  return feature.buffer(500);   // substitute in your value of here of buffer size.
 };
 
 //map that to reef assesst
