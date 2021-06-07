@@ -1,4 +1,5 @@
-//// CRSEI CODE ////
+/// CRSEI CODE ////
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7,7 +8,7 @@
 //upload point files of focus reefs as asset into Earth engine. Here called 'reef_points
 
 var buffer500 = function(feature) {
-  return feature.buffer(500);   // substitute in your value of here of buffer size.
+  return feature.buffer(500);   // substitute in your value of here of biuffer size.
 };
 
 //map that to reef assesst
@@ -26,11 +27,14 @@ var roi = ee.FeatureCollection([
   ee.Feature(ee.Geometry.Point(71.7620, -5.2479).buffer(500), {'id': 'PB_IleDiamant'})
   ]);
 
+  
+
+  
 Map.setCenter(72.0,-5.32, 10); //sets centre of map 
 
 Map.addLayer(roi, {}, 'roi'); //adds your reefs to the map
 
-print('roi', roi)
+print('roi', roi);
 
 // rename feature collections
 // due to client/server functions, 
@@ -56,7 +60,7 @@ var Date_End = ee.Date('2014-12-01');
 // Create list of dates for time series
 var n_months = Date_End.difference(Date_Start,'month').round();
 var dates = ee.List.sequence(0,n_months,3); 
-//starts at 0, finishes at the finl number of months, and final number gives the step
+//starts at 0, finishes at the final number of months, and final number gives the step
 //between the months. The above example gives a 3 month gap
 
 // map this function to your date list
@@ -110,6 +114,7 @@ var sst_mean = sstCollection.mean();
 // apply SEI function to image collection
 var sstHS_collection = sstCollection.map(sstHS_function);
 
+   
 
 // get mean for collection 
 var sstHS_mean = sstHS_collection.mean();
@@ -157,23 +162,27 @@ sstHS_region = sstHS_region.map(function(feature) {
 print('sstHS_region', sstHS_region);
 
 
+
 /// DEPTH ///
+
+// using code from Li et al. (2021) https://doi.org/10.3390/rs13081469
+// develops depth profiles for shallow water regions
 
 var DepthFnc = function(d1) {
   var start = ee.Date(d1);
   // creating a score for a one month period from each date in the list
   var end = ee.Date(d1).advance(1,'month');
   var date_range = ee.DateRange(start,end);
-  
-// select depth image
-var depth = ee.Image('NOAA/NGDC/ETOPO1').select('bedrock');
 
-// calculate SEI - note no function as sstV is a single image not image collection
+var depth = ASB_depth;
+
+// health score function
 var depthHS = depth.expression(
- "(bedrock > -10.0) ? 1.0" +
- ":((bedrock < -20.0) ? 0.0" +
-  ":1.0/10.0*bedrock + 2.0)",
+ "(bedrock < 10.0) ? 1.0" +
+ ":((bedrock > 20.0) ? 0.0" +
+  ":-1.0/10.0*bedrock + 2.0)",
  {"bedrock" : depth});
+ 
 
 //depth doesn't change over short time scales to no need to collect mean 
 
@@ -699,178 +708,7 @@ windHS_region = windHS_region.map(function(feature) {
 print('windHS_region', windHS_region);
 
 
-/// STRESS REINFORCERS ///
 
-/// CHLOROPHYLL-A ///
-
-var chlaFnc = function(d1) {
-  var start = ee.Date(d1);
-  // creating a score for a one month period from each date in the list
-  var end = ee.Date(d1).advance(1,'month');
-  var date_range = ee.DateRange(start,end);
-
-//select chlorphyll-a image collection, with date and regions filter
-var chlaCollection = ee.ImageCollection('NASA/OCEANDATA/MODIS-Aqua/L3SMI').select('chlor_a')
-.filterDate(date_range)
-.filterBounds(roi); //reefs_buffer
-
-// get collection mean
-var chla_mean = chlaCollection.mean();
-
- 
-// SEI function
-function chlaHS_function(image){
-  var chlaHS = image.expression(
- "(chlor_a > 0.8) ? 1.0" +
- ":((chlor_a < 0.6) ? 0.0" +
- ": 5.0*chlor_a - 3.0)",
- {"chlor_a" : image});
-   return chlaHS;
- }
- 
-// apply SEI function to image collection
-var chlaHS_collection = chlaCollection.map(chlaHS_function);
-
-// calculate mean collection by time 
-var chlaHS_mean = chlaHS_collection.mean();
-
-//divide low reliability variables by 2
-var chlaHS_low = chlaHS_mean.expression(
-  'SE_score/2.0',{
-    'SE_score':chlaHS_mean.select('constant')
-  });
-
-chlaHS_low = chlaHS_low.select('constant').rename('SE_score')//renames band to SE_score
-                     // adds system:time to properties
-                     .set('system:time_start', start.millis())
-                     //adds the variable data as a band
-                     .addBands(chla_mean.rename('variable_mean'));
-
-return  chlaHS_low;
-
-};
-//// CREATE FEATURE COLLECTION OF SEI FOR EACH DATE ////
-
-// map the SEI function to the list of dates
-var chlaHS_images = dates.map(chlaFnc);
-
-//turn into image collection
-var chlaHS = ee.ImageCollection(chlaHS_images);
-
-// reduce the ImageCollection by Region
-// gives a SEI for the variable for each of the reefs
-var chlaHS_region = chlaHS.map(function(image){
-    //adding image date as a band to each image as properties are lost when reducing
-  var dated_image = image.addBands(image.metadata('system:time_start')); 
-  return dated_image
-  .reduceRegions({
-    collection:reefsEdit , 
-    reducer:ee.Reducer.mean(), 
-    scale: 30
-  });
-});
-
-chlaHS_region = chlaHS_region.flatten(); //need .flatten to add mean as a column
-
-// add metadata to the FeatureCollection
-chlaHS_region = chlaHS_region.map(function(feature) {
-
-  return feature.set('date', ee.Date(feature.get('system:time_start')))
-                .set('variable', 'chlorophyll-a')
-                .set('label', 'Reinforcer')
-                .set('reliability', 'low');
-});
-
-//check this is running, 
-//for long time periods this may time out but it will still export OK
-print('chlaHS_region', chlaHS_region);
-
-
-
-/// PARTICULATE ORGANIC CARBON
-
-var pocFnc = function(d1) {
-  var start = ee.Date(d1);
-  // creating a score for a one month period from each date in the list
-  var end = ee.Date(d1).advance(1,'month');
-  var date_range = ee.DateRange(start,end);
-
-//select POC image collection, with date and regions filter
-var pocCollection = ee.ImageCollection('NASA/OCEANDATA/MODIS-Aqua/L3SMI').select('poc')
-.filterDate(date_range)
-.filterBounds(roi);
-
-// get collection mean
-var poc_mean = pocCollection.mean();
-
- 
- // SEI function
-function pocHS_function(image){
-  var pocHS = image.expression(
- "(poc > 264.0) ? 1.0" +
- ":((poc < 240.0) ? 0.0" +
- ": 1.0/24.0*poc - 10.0)",
- {"poc" : image});
-   return pocHS;
- }
-
-// apply SEI function to image collection
-var pocHS_collection = pocCollection.map(pocHS_function);
-
-
-
-// calculate mean collection by time 
-var pocHS_mean = pocHS_collection.mean();
-
-//divide low reliability variables by 2
-var pocHS_low = pocHS_mean.expression(
-  'SE_score/2.0',{
-    'SE_score':pocHS_mean.select('constant')
-  });
-
-pocHS_low = pocHS_low.select('constant').rename('SE_score')//renames band to SE_score
-                    // adds system:time to properties
-                     .set('system:time_start', start.millis())
-                     //adds the variable data as a band
-                     .addBands(poc_mean.rename('variable_mean'));
-                      
-return(pocHS_low);
-};
-
-//// CREATE FEATURE COLLECTION OF SEI FOR EACH DATE ////
-
-// map the SEI function to the list of dates
-var pocHS_images = dates.map(pocFnc);
-
-//turn into image collection
-var pocHS = ee.ImageCollection(pocHS_images);
-
-// reduce the ImageCollection by Region
-// gives a SEI for the variable for each of the reefs
-var pocHS_region = pocHS.map(function(image){
-  //adding image date as a band to each image as properties are lost when reducing
-  var dated_image = image.addBands(image.metadata('system:time_start')); 
-  return dated_image
-  .reduceRegions({
-    collection:reefsEdit , 
-    reducer:ee.Reducer.mean(), 
-    scale: 30
-  });
-});
-
-pocHS_region = pocHS_region.flatten(); //need .flatten to add mean as a column
-
-// add metadata to the FeatureCollection
-pocHS_region = pocHS_region.map(function(feature) {
-  return feature.set('date', ee.Date(feature.get('system:time_start')))
-                .set('variable', 'POC')
-                .set('label', 'Reinforcer')
-                .set('reliability', 'low');
-});
-
-//check this is running, 
-//for long time periods this may time out but it will still export OK
-print('pocHS_region', pocHS_region);
 
 /// STRESS REDUCERS ///
 
@@ -1168,8 +1006,7 @@ print('sstVHS_region', sstVHS_region);
 // combine all Feature Collections of variables for export
 var Dat = ee.FeatureCollection([sstHS_region, depthHS_region, salHS_region, 
                                       anmlyHS_region, DHWHS_region, windHS_region,
-                                      chlaHS_region, currentHS_region, pocHS_region, 
-                                      cloudHS_region, sstVHS_region]).flatten();
+                                      currentHS_region, cloudHS_region, sstVHS_region]).flatten();
 print('Dat', Dat);                                      
 
 //rename columns
