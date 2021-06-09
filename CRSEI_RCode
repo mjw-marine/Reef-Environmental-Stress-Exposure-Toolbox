@@ -1,0 +1,74 @@
+################################################################################################################################
+
+########## EXAMPLE CODE FOR CREATING CRSEI FOR A REEF REGION FROM SE DATA FROM GOOGLE EARTH ENGINE ##########
+
+###############################################################################################################################
+
+#first add in SE scores obtained from GEE code.
+
+SE_DAT <- read.csv("SE_DAT.csv")
+
+#add year and month columns
+
+SE_DAT$Year <- strftime(SE_DAT$date, format="%Y")
+SE_DAT$Month <- strftime(SE_DAT$date, format="%b")
+
+
+
+## turn reducer into into negative values
+
+SE_DAT <- SE_DAT %>% 
+  mutate_at(vars(SE_score), ~ if_else(stress_category == "Reducer", .x*-1, .x))
+
+# if NA in variable then change SE_score to NA
+
+SE_DAT$SE_score <- ifelse(is.na(SE_DAT$variable_mean), NA, SE_DAT$SE_score)
+
+
+#count number of variables with data per year, month and reef
+
+sapply(SE_DAT, class)
+
+num_vars <- SE_DAT %>% 
+  na.omit() %>% 
+  mutate_if(is.character, as.factor) %>%
+  group_by(id, Year, Month) %>%
+  summarise(var_num = n())
+
+# add in denominator number
+
+SE_DAT <- merge(SE_DAT, num_vars, by.x = c('id','Year', 'Month'), 
+                       by.y = c('id', 'Year', 'Month'), all.x  = TRUE)
+
+
+
+# add new column with SE_score divided by var to get the SE mean for each variable
+SE_DAT$SE_mean <- SE_DAT$SE_score/SE_DAT$var_num
+
+
+#create CRSEI score for each reef/id
+CRSEI_DAT <- SE_DAT %>% 
+  na.omit() %>% 
+  mutate_if(is.character, as.factor) %>%
+  group_by(id, Year, Month) %>%
+  summarise(CRSEI_score= sum(SE_mean))
+
+#round score
+CRSEI_DAT$CRSEI_score <- round(CRSEI_DAT$CRSEI_score, digits=2)
+
+CRSEI_DAT$Date <- paste0("01/", CRSEI_DAT$Month,"/", CRSEI_DAT$Year)
+CRSEI_DAT$Date  <- as.Date(CRSEI_DAT$Date, "%d/%b/%Y")
+
+CRSEI_DAT <- CRSEI_DAT %>% 
+  arrange(Date, id) %>% 
+
+
+#change score so if negative it is 0
+
+CRSEI_DAT$CRSEI_score <- ifelse(CRSEI_DAT$CRSEI_score < 0, 0, CRSEI_DAT$CRSEI_score)
+
+#################################################################################################################################
+
+########## A MONTHLY CRSEI SCORE PER REEF HAS NOW BEEN CALCULATED PER REEF AND PRESENTED IN A DATAFRAME ##########
+
+################################################################################################################################
