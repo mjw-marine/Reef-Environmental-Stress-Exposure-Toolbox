@@ -9,4 +9,6 @@ Code for the CRSEI provided, as well as a link to it in Google Earth Engine.
 
 Code for the Automated Shallow Water Bathymetry for Global Coral Reef Regions (CRSEI_ASWB) data devised from Li et al. (2021) https://doi.org/10.3390/rs13081469 is also provided, along with R code to calculate the CRSEI from the GEE outputs.
 
+An CRSEI Earth Engine app has been developed as part of this project. It can be found at https://mjw1280.users.earthengine.app/view/coral-reef-stress-exposure-index.
+
 Link to publication will be added when publication occurs.
