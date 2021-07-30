@@ -1,5 +1,5 @@
 # Coral-Reef-Stress-Exposure-Indicators
-Google Earth Engine code for Coral Reef Stress Exposure Indicators
+Google Earth Engine code for Coral Reef Stress Exposure Index
 
 This research is part of a PhD chapter to investigate if remotely sensed environmental data from Google Earth Engine can be used to investigate stress on coral reef systems at a global scale.
 
