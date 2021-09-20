@@ -1,4 +1,4 @@
-# Coral-Reef-Stress-Exposure-Indicators
+# Reef Environmental Stress Exposure Toolbox (RESET)
 Google Earth Engine code for Reef Environmental Stress Exposure Toolbox
 
 This research is part of a PhD chapter to investigate if remotely sensed environmental data from Google Earth Engine can be used to investigate stress on coral reef systems at a global scale.
