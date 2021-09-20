@@ -46,29 +46,29 @@ SE_DAT <- merge(SE_DAT, num_vars, by.x = c('id','Year', 'Month'),
 SE_DAT$SE_mean <- SE_DAT$SE_score/SE_DAT$var_num
 
 
-#create CRSEI score for each reef/id
-CRSEI_DAT <- SE_DAT %>% 
+#create RESET Index score for each reef/id
+RESET_DAT <- SE_DAT %>% 
   na.omit() %>% 
   mutate_if(is.character, as.factor) %>%
   group_by(id, Year, Month) %>%
-  summarise(CRSEI_score= sum(SE_mean))
+  summarise(RESETI_score= sum(SE_mean))
 
 #round score
-CRSEI_DAT$CRSEI_score <- round(CRSEI_DAT$CRSEI_score, digits=2)
+RESET_DAT$RESET_score <- round(RESET_DAT$RESET_score, digits=2)
 
-CRSEI_DAT$Date <- paste0("01/", CRSEI_DAT$Month,"/", CRSEI_DAT$Year)
-CRSEI_DAT$Date  <- as.Date(CRSEI_DAT$Date, "%d/%b/%Y")
+RESET_DAT$Date <- paste0("01/", RESET_DAT$Month,"/", RESET_DAT$Year)
+RESET_DAT$Date  <- as.Date(RESET_DAT$Date, "%d/%b/%Y")
 
-CRSEI_DAT <- CRSEI_DAT %>% 
+RESET_DAT <- RESET_DAT %>% 
   arrange(Date, id) %>% 
 
 
 #change score so if negative it is 0
 
-CRSEI_DAT$CRSEI_score <- ifelse(CRSEI_DAT$CRSEI_score < 0, 0, CRSEI_DAT$CRSEI_score)
+RESET_DAT$RESET_score <- ifelse(RESET_DAT$RESETI_score < 0, 0, RESET_DAT$RESET_score)
 
 #################################################################################################################################
 
-########## A MONTHLY CRSEI SCORE PER REEF HAS NOW BEEN CALCULATED PER REEF AND PRESENTED IN A DATAFRAME ##########
+########## A MONTHLY RESET INDEX SCORE PER REEF HAS NOW BEEN CALCULATED PER REEF AND PRESENTED IN A DATAFRAME ##########
 
 ################################################################################################################################
