@@ -103,10 +103,10 @@ var sst_mean = sstCollection.mean();
  function sstHS_function(image){
   var sstHS = image.expression(
  "(sst < 18.0) ? 1.0" +
- ":((sst <= 21.0) ? 1.0/2.0*sst + 20.0/3.0" +
- ":(sst < 28.0) ? 0.0" +
- ":(sst <= 30.0) ? 1.0/2.0*sst - 14.0" +
- ": 1.0)",
+       ":((sst <= 21.0) ? -1.0/3.0*sst + 7.0" +
+       ":(sst < 28.0) ? 0.0" +
+       ":(sst <= 30.0) ? 1.0/2.0*sst - 14.0" +
+       ": 1.0)",
  {"sst" : image});
    return sstHS;
  }
