@@ -52,7 +52,7 @@ var reefsEdit = ee.FeatureCollection(FeatCollectAsAList.map(function(feat){
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-//// ADD DATES OF INTEREST FOR THE CRSEI SCORE ////
+//// ADD DATES OF INTEREST FOR THE RESET SCORE ////
 
 var Date_Start = ee.Date('2013-01-01');
 var Date_End = ee.Date('2014-12-01');
@@ -76,9 +76,9 @@ print('dates',dates);
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-//// CRSEI ////
+//// RESET ////
 
-// below creates a function to create a stress exposure index (SEI) for each variable
+// below creates a function to create an stress exposure index (SEI) for each variable
 // which is then mapped to the date list to create a feature collection 
 //for each variable
 
@@ -1028,7 +1028,7 @@ var cols = ['id', 'date', 'variable', 'SE_score', 'variable_mean', 'stress_categ
 
 Export.table.toDrive({
   collection: Dat,
-  description: 'CRSEI_',
+  description: 'RESET_',
   selectors: cols,
   fileFormat: 'CSV'
 });
