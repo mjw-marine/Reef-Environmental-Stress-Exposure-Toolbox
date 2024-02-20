@@ -12,3 +12,8 @@ Code for the Automated Shallow Water Bathymetry for Global Coral Reef Regions (C
 An CRSEI Earth Engine App has been developed as part of this project. It can be found at https://mjw1280.users.earthengine.app/view/reef-environmental-stress-exposure-toolbox.
 
 Link to publication will be added when publication occurs.
+
+
+20/02/2024
+
+New code has been added for the RESET. As the spatial resolution of the nine variables varies, each product is resampled using bilinear interpolation to match the highest resolution product (50m). This code can be found in RESET_GEE_CODE_resample.
