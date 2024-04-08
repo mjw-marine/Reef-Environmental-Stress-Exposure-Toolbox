@@ -51,7 +51,7 @@ RESET_DAT <- SE_DAT %>%
   na.omit() %>% 
   mutate_if(is.character, as.factor) %>%
   group_by(id, Year, Month) %>%
-  summarise(RESETI_score= sum(SE_mean))
+  summarise(RESET_score= sum(SE_mean))
 
 #round score
 RESET_DAT$RESET_score <- round(RESET_DAT$RESET_score, digits=2)
@@ -65,7 +65,7 @@ RESET_DAT <- RESET_DAT %>%
 
 #change score so if negative it is 0
 
-RESET_DAT$RESET_score <- ifelse(RESET_DAT$RESETI_score < 0, 0, RESET_DAT$RESET_score)
+RESET_DAT$RESET_score <- ifelse(RESET_DAT$RESET_score < 0, 0, RESET_DAT$RESET_score)
 
 #################################################################################################################################
 
