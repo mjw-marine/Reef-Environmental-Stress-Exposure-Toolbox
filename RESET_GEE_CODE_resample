@@ -74,7 +74,7 @@ print('dates',dates);
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-//// CRSEI ////
+//// RESET ////
 
 // below creates a function to create a stress exposure index (SEI) for each variable
 // which is then mapped to the date list to create a feature collection 
@@ -121,9 +121,11 @@ var sst_mean = sstCollection.mean();
  
  function sstHS_function(image){
   var sstHS = image.expression(
- "(sst > 29.5) ? 1.0" +
- ":((sst < 24.0) ? 0.0" +
- ": 2.0/11.0*sst - 48.0/11.0)",
+  "((sst < 18.0) ? 1.0" +
+ ":(sst <= 21.0) ? -1.0/3.0*sst + 7.0" +
+ ":(sst <= 27.0) ? 0.0" +
+ ":(sst <= 30.0) ? 1.0/2.0*sst - 14.0" +
+ ": 1.0)",
  {"sst" : image});
    return sstHS;
  }
@@ -194,10 +196,9 @@ var depth = AGSWB;
 
 // health score function
 var depthHS = depth.expression(
- "(bedrock < 5.0) ? 0.0" +
-  ":((bedrock < 15.0) ? 1.0" +
-  ":(bedrock <= 30.0) ? -1.0/15.0*bedrock + 2.0"+
-  ": 0.0)",
+ "(bedrock < 10.0) ? 1.0" +
+ ":((bedrock > 20.0) ? 0.0" +
+  ":-1.0/10.0*bedrock + 2.0)",
  {"bedrock" : depth});
  
 
@@ -447,9 +448,9 @@ var anmly_mean = anmly.mean();
 // SEI function
 function anmlyHS_function(image){
   var anmlyHS = image.expression(
- "(sst > 0.8) ? 1.0" +
- ":((sst < 0.4) ? 0.0" +
- ": 5.0/2.0*sst -1.0)",
+  "(sst > 2.0) ? 1.0" +
+ ":((sst < 1.0) ? 0.0" +
+ ": 1.0/2.0*sst -1.0/2.0)",
  {"sst" : image});
    return anmlyHS;
  }
@@ -655,9 +656,9 @@ var proxy = 0;
   DHWCount  = DHWCount.unmask(proxy);
 var DHW_HS = DHWCount.expression(
  "(sst_count == proxy) ? 0.0" +
- ":((sst_count > 6.0) ? 1.0" +
+ ":((sst_count > 8.0) ? 1.0" +
  ":(sst_count < 4.0) ? 0.0" +
- ": 1.0/2.0*sst_count - 2.0)",
+ ": 1.0/4.0*sst_count - 1.0)",
  {"sst_count" : DHWCount.select('sst_count'), "proxy": proxy});
  
 DHW_HS = DHW_HS.select('constant').rename('SE_score')
@@ -1194,7 +1195,7 @@ var cols = ['id', 'date', 'variable', 'SE_score', 'variable_mean', 'stress_categ
 
 Export.table.toDrive({
   collection: Dat,
-  description: 'RESET_',
+  description: 'RESET_TEST',
   selectors: cols,
   fileFormat: 'CSV'
 });
