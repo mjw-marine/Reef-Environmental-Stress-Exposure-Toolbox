@@ -519,25 +519,21 @@ var DOY = ee.List.sequence(sMillis, eMillis, millisIn7Days).map(function(dateMil
 //function that creates weekly anomaly average
 //maps to DOY list created
 
-var SSTA_7d =  ee.ImageCollection.fromImages(
-      DOY.map(function(d) {
+var SSTA_7d =  ee.ImageCollection.fromImages(DOY.map(function(d) {
       d = ee.Number(d);
       var SSTA_date = series_daily
                       .filter(ee.Filter.calendarRange(d, d.add(7),'day_of_year'));
                       
       var img_last = ee.Image(SSTA_date.sort('system:time_start',true).first());
       var size = SSTA_date.size();
-
-      var SSTA_filtered_7d = ee.Image(ee.Algorithms.If(size.eq(0),
-                                            ee.Image.constant(0).toFloat(),
-                                            ee.Image(series_daily
-                                            .filter(ee.Filter.calendarRange(d, d.add(7), 'day_of_year'))
-                                            .mean()
-                                            )));
       
-      return SSTA_filtered_7d
-              .set('DOY', d)
-              .set('system:time_start', img_last.get('system:time_start'));
+      /// If there are no images, return nothing (null), otherwise return the mean and set the time and DOY ///
+      var SSTA_filtered_7d = ee.Image(ee.Algorithms.If(size.eq(0),
+                                            null,
+                                            ee.Image(SSTA_date.mean()).set('system:time_start', img_last.get('system:time_start')).set('DOY', d)
+                                            ));
+
+      return (SSTA_filtered_7d);
 
   })
   .flatten()
